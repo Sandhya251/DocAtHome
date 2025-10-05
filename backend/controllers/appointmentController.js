@@ -72,6 +72,14 @@ exports.createAppointment = asyncHandler(async (req, res) => {
       doctorDesignation: appt.doctor?.specialty || "",
     }));
   }
+   // ------------------ ISSUE 178 FIX START ------------------
+    // If file was uploaded, multer-storage-cloudinary already uploaded to Cloudinary
+    // Cloudinary URL is available in req.file.path
+    let reportImageUrl = "";
+    if (req.file && req.file.path) {
+        reportImageUrl = req.file.path;
+    }
+    // ------------------ ISSUE 178 FIX END ------------------
   // Create the appointment in the database
   console.log("shared relay notes found:", sharedRelayNotes);
   const appointment = await Appointment.create({
@@ -79,6 +87,7 @@ exports.createAppointment = asyncHandler(async (req, res) => {
     paymentMethod: paymentMethod || "external",
     sharedRelayNotes, // <-- array of previous notes
     shareRelayNote: shareRelayNoteBool, // <-- always boolean
+     reportImage: reportImageUrl, // <-- save file URL here //issue #178
   });
 
   // Send a success response back to the frontend

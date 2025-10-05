@@ -1,5 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer'); // [ISSUE-178 FIX START] Added multer for file upload
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;// [ISSUE-178 FIX END]
 
 // Import all the necessary controller functions
 const {
@@ -20,6 +23,27 @@ const {
   limitRequestSize,
   detectXSS,
 } = require("../middleware/validation");
+
+// [ISSUE-178 FIX START] Configure cloudinary + multer
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "appointments",
+    allowed_formats: ["jpg", "png", "pdf"],
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+});
+// [ISSUE-178 FIX END]
 
 // Apply comprehensive security middleware to all appointment routes
 router.use(limitRequestSize);
@@ -53,6 +77,7 @@ router
 // Creates a new appointment with comprehensive input validation
 router.route("/").post(
   protect,
+  upload.single("reportImage"),// added as part of #178 issue
   //validate(appointmentSchemas.create),
   createAppointment
 );
